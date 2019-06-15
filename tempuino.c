@@ -1,7 +1,7 @@
-/*
+  /*
   Tempuino:
   
-  Overtemp shutdown protection with reset capability for 50mil BTU oil-fueled forced-air water heater.
+  Overtemp shutdown protection with reset capability for 35,000,000 BTU oil-fueled forced-air water heater.
   
   When max temp is reached, fuel-oil is cut and cannot be restarted until temp is back in range 
   AND reset button is held for 2 seconds. Either condition alone will not restart oil.
@@ -13,10 +13,10 @@
 // declarations
 int sensorValue1 = 0;
 int sensorValue2 = 0;
-int shutdownCondition = 0;
+int shutdownCondition = 1;
 int resetCount = 0;
 int reportCount = 0;
-int maxTemp = 215;
+int maxTemp = 935; // 935 == ~215 degrees
 char status = 'n';
 
 void setup()
@@ -26,7 +26,7 @@ void setup()
   pinMode(A1, INPUT);
   
   // reset button
-  pinMode(2, INPUT);
+  pinMode(2, INPUT_PULLUP);
   
   // shutdownCondition Relay
   pinMode(13, OUTPUT);
@@ -47,7 +47,7 @@ void loop()
   reportCount++;
   
   // unset shutdownCondition
-  if (digitalRead(2) == HIGH){resetCount++;}
+  if (digitalRead(2) == LOW){resetCount++;}
   else {resetCount = 0;}
   if (resetCount >= 20 && sensorValue1 < maxTemp && sensorValue2 < maxTemp){
   shutdownCondition = 0;
@@ -55,8 +55,8 @@ void loop()
   
   // switch from shutdown condition to online
   if (shutdownCondition == 0){
-  digitalWrite(13, LOW);
-  digitalWrite(12, HIGH);
+  digitalWrite(13, HIGH);
+  digitalWrite(12, LOW);
   status = 'n';
   }
   
@@ -64,25 +64,24 @@ void loop()
   sensorValue1 = analogRead(A0);
   sensorValue2 = analogRead(A1);
   
-  // if sensor values >= 215 or pin8 (key shutdown) reads high
-  //set shutdown condition
+  // if sensor values >= max temp or pin8 (key shutdown) reads low set shutdown condition
   if (sensorValue1 >= maxTemp || sensorValue2 >= maxTemp){
   shutdownCondition = 1;
   status = 't';
   }
   
-  if (digitalRead(8) == HIGH){
+  if (digitalRead(8) == LOW){
   shutdownCondition = 1;
   status = 'k';
   }
   
   // if shutdown condition send shutdown
   if (shutdownCondition == 1){
-  digitalWrite(13, HIGH);
-  digitalWrite(12, LOW);
+  digitalWrite(13, LOW);
+  digitalWrite(12, HIGH);
   }
   
-  // print temp values, status every 20 iterations:
+  // print temp values, status -- every 20 iterations:
   if (reportCount >= 20){
   Serial.print(sensorValue1);
   Serial.print(",");
